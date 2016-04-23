@@ -31,6 +31,9 @@
 #define DEFAULT_ID		1 //this is the motor ID
 #define DEFAULT_TTY_NUM			1 // typically, 0 for /dev/ttyUSB0
 
+const short int OPEN_VALUE=1000;
+const short int CLOSE_VALUE=2000;
+
 extern "C" { 
   int send_dynamixel_goal(short int motor_id, short int goalval); 
   int open_dxl(int deviceIndex, int baudnum);
@@ -61,12 +64,25 @@ void open_close_CB(const std_msgs::Bool& bool_msg)
   short int goal_angle;
   ROS_INFO("received gripper command");
   if (bool_msg.data) {
-  goal_angle = 3600;
+  ROS_INFO("commanding close gripper, %d",CLOSE_VALUE);
+  goal_angle = CLOSE_VALUE;
   send_dynamixel_goal(motor_id,goal_angle);
   }
   else {
-  goal_angle = 3000;
+  ROS_INFO("commanding open gripper, %d",OPEN_VALUE);
+  goal_angle = OPEN_VALUE;
   send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
   }  
 } 
 
@@ -129,6 +145,9 @@ int main(int argc, char **argv)
     ROS_WARN("could not open /dev/ttyUSB%d; check permissions?",ttynum);
     return 0;
   }
+  else {
+     ROS_INFO("opened /dev/ttyUSB%d",ttynum);
+  }
 
   ROS_INFO("attempting communication with motor_id %d at baudrate code %d",motor_id,baudnum);
 
@@ -136,14 +155,21 @@ int main(int argc, char **argv)
   ros::Subscriber open_close_subscriber = n.subscribe("gripper_open_close",1,open_close_CB);
   std_msgs::Int16 motor_ang_msg;
   short int sensed_motor_ang=0;
-
+  int alive=0;
   while(ros::ok()) {
+   alive++;
+   if (alive>100) {
+      alive=0;
+      ROS_INFO("gripper driver is alive");
+   }
    sensed_motor_ang = read_position(motor_id);
    if (sensed_motor_ang>4096) {
       ROS_WARN("read error from Dynamixel: ang value %d at cmd %d",sensed_motor_ang-4096,g_goal_angle);
     }
+    else{
     motor_ang_msg.data = sensed_motor_ang;
-   pub_jnt.publish(motor_ang_msg);
+     pub_jnt.publish(motor_ang_msg);
+   }
    ros::Duration(dt).sleep();
    ros::spinOnce();
    }
