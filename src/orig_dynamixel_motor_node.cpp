@@ -31,8 +31,10 @@
 #define DEFAULT_ID		1 //this is the motor ID
 #define DEFAULT_TTY_NUM			1 // typically, 0 for /dev/ttyUSB0
 
-const short int OPEN_VALUE=1000;
-const short int CLOSE_VALUE=2000;
+const short int OPEN_VALUE=1500;
+const short int CLOSE_VALUE=2400;
+const int CCW_LIM=4000;
+const int CW_LIM=1;
 
 extern "C" { 
   int send_dynamixel_goal(short int motor_id, short int goalval); 
@@ -44,6 +46,9 @@ extern "C" {
   char dev_name[100] = {0, };
   void dxl_terminate(void);
   short int read_position(short int motor_id);
+  void print_info(short int motor_id);
+  int set_dynamixel_CCW_limit(short int motor_id, int CCW_limit);
+  int set_dynamixel_CW_limit(short int motor_id, int CW_limit);
 }
 
 //globals:
@@ -55,6 +60,7 @@ extern "C" {
 void dynamixelCB(const std_msgs::Int16& goal_angle_msg) 
 { 
   short int goal_angle = goal_angle_msg.data;
+  ROS_INFO("received command angle %d",goal_angle);
   g_goal_angle = goal_angle; // for use by main()
      send_dynamixel_goal(motor_id,goal_angle);
 } 
@@ -65,8 +71,20 @@ void open_close_CB(const std_msgs::Bool& bool_msg)
   ROS_INFO("received gripper command");
   if (bool_msg.data) {
   ROS_INFO("commanding close gripper, %d",CLOSE_VALUE);
+
   goal_angle = CLOSE_VALUE;
   send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
+    send_dynamixel_goal(motor_id,goal_angle);
+  ros::Duration(0.1).sleep();
   }
   else {
   ROS_INFO("commanding open gripper, %d",OPEN_VALUE);
@@ -160,7 +178,10 @@ int main(int argc, char **argv)
    alive++;
    if (alive>100) {
       alive=0;
+   set_dynamixel_CCW_limit(motor_id, CCW_LIM);
+   set_dynamixel_CW_limit(motor_id, CW_LIM);
       ROS_INFO("gripper driver is alive");
+      print_info(motor_id);
    }
    sensed_motor_ang = read_position(motor_id);
    if (sensed_motor_ang>4096) {

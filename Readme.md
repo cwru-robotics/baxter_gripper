@@ -58,5 +58,10 @@ REVISITED 4/16/16:
 then publish:
 `rostopic pub gripper_open_close std_msgs/Bool 0`  (for open; 1 for close)
 
+repair/retune 4/27/16; good open value = 1500; close = 2400 (for can)
+
+
+
+
 
 

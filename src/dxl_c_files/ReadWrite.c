@@ -33,6 +33,8 @@
 #define P_PRESENT_POSITION_H	37
 #define P_MOVING		46
 
+#define P_PRESENT_TEMPERATURE   43
+
 // Defualt setting
 #define DEFAULT_BAUDNUM		1 // 1Mbps
 #define DEFAULT_ID		2
@@ -140,6 +142,24 @@ short int read_position(short int motor_id) {
                               //printf("comm err\n");
 			}
         return PresentPos;
+}
+
+void print_info(short int motor_id) {
+  short int val;
+  val = dxl_read_word( motor_id, P_PRESENT_POSITION_L );
+  printf("encoder position = %d\n",val);
+  val = dxl_read_word( motor_id, P_GOAL_POSITION_L );
+  printf("goal position = %d\n",val);
+  val = dxl_read_word( motor_id, P_CW_LIMIT_L);
+  printf("CW angle limit = %d\n",val);
+  val = dxl_read_word( motor_id, P_CCW_LIMIT_L);
+  printf("CCW angle limit = %d\n",val);
+  val = dxl_read_word( motor_id, P_TORQUE_ENABLE);
+  printf("torque mode enable status = %d\n",val);
+  val = dxl_read_word( motor_id, P_PRESENT_TEMPERATURE);
+  printf("present temperature = %d\n",val);
+
+
 }
 
 // Print communication result
